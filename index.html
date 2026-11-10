@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101529">
+  <meta name="description" content="一次、二次、三次多項式函數圖形，三人獨立觸控闖關。">
+  <title>函數圖形試煉塔</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=1.0.0">
+  <script defer src="core.js?v=1.0.0"></script>
+  <script defer src="app.js?v=1.0.0"></script>
+</head>
+<body data-theme="dark">
+  <div class="ambient" aria-hidden="true"></div>
+  <div id="app">
+    <header class="masthead">
+      <div class="brand-mark" aria-hidden="true">✧</div>
+      <div class="brand"><div class="eyebrow">THE POLYNOMIAL ATELIER</div><h1>函數圖形<span>試煉塔</span></h1></div>
+      <div class="header-note"><span class="status-dot"></span>三區獨立闖關<span class="note-divider">/</span>觀察係數，解鎖曲線</div>
+      <button id="teacher-trigger" class="teacher-trigger" aria-label="教師設定，請長按一點五秒" title="長按 1.5 秒開啟教師工具"><span class="hold-fill"></span><span class="teacher-icon">⚙</span><span>教師工具<small>長按 1.5 秒</small></span></button>
+    </header>
+    <main id="arena" class="arena" aria-label="三位玩家各自獨立的闖關區"></main>
+    <footer class="page-footer"><span>點選圖形或配對，再按「確認答案」</span><span>答錯 −10 秒 · 鎖定送出 3 秒<span class="version">v1.0.0</span></span></footer>
+  </div>
+  <div id="modal-root"></div>
+  <div id="toast" class="toast" role="status"></div>
+  <noscript>請啟用瀏覽器的 JavaScript 才能遊玩。</noscript>
+</body>
+</html>
