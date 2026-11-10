@@ -31,6 +31,7 @@
   }
   function chips(){return [1,2,3].map(d=>'<span class="degree-chip'+(settings.degrees.includes(d)?'':' off')+'">'+['','一次','二次','三次'][d]+(settings.degrees.includes(d)?' · '+settings.seconds[d]+'s':'')+'</span>').join('');}
   function renderStandby(lane){
+    lane.root.classList.remove('match-mode');
     $('.name-label',lane.root).textContent='';
     lane.content.innerHTML='<div class="standby">'+towerSVG(lane.id)+'<div class="standby-kicker">YOUR TRIAL AWAITS</div><h2>讓曲線，為你亮起</h2><p class="standby-description">看懂係數的線索，找出正確圖形。<br>完成三圖配對，點亮你的試煉塔。</p><div class="degree-chips">'+chips()+'</div><div class="standby-bottom"><input class="name-input" data-player-name="'+lane.id+'" type="text" maxlength="12" autocomplete="off" aria-label="第 '+(lane.id+1)+' 位玩家姓名或座號" placeholder="姓名／座號（可留空）"><button class="primary-button" data-action="start" data-player="'+lane.id+'">開始闖關<span class="start-arrow">→</span></button><p class="standby-footnote">'+(settings.degrees.length*4)+' 題獨立挑戰 · 每類最後一題為三圖配對<br>答對：剩餘秒數 + 10 分</p></div></div>';
   }
@@ -92,11 +93,18 @@
   }
   function renderQuestion(lane){
     const s=lane.session,q=s.question;
+    lane.root.classList.toggle('match-mode',q.mode==='match');
     lane.answer=q.mode==='match'?[-1,-1,-1]:null;lane.lockedPairs=[false,false,false];
-    lane.content.innerHTML=chapterTrail(lane)+'<div class="play-body"><div class="status-bar"><div><div class="chapter-name">'+chapterNames[q.d]+'</div><div class="question-position">第 '+(s.index+1)+' / '+s.questions.length+' 題 · 本章 '+(q.stage+1)+' / 4</div></div><div class="timer-wrap"><span class="timer-clock">'+q.limit+'</span><span class="timer-meta">SECONDS<br>本題倒數</span></div><div class="score-box"><span>'+s.score+'</span><small>POINTS</small></div></div><div class="timer-track"><span></span></div><div class="question-intro"><h2>'+q.title+'</h2><p class="question-stem">'+q.stem+'</p><div class="condition">'+q.condition+'</div></div><div class="question-workspace">'+workspaceHTML(lane)+'</div><div class="feedback" role="status"><span class="feedback-heading">觀察提示</span><span>'+initialTip(q)+'</span></div><div class="action-bar"><button class="primary-button submit-button" data-action="submit" data-player="'+lane.id+'" disabled>請先'+(q.mode==='match'?'完成三組配對':'選擇圖形')+'</button></div></div>';
+    lane.content.innerHTML=chapterTrail(lane)+'<div class="play-body"><div class="status-bar"><div class="chapter-status"><div class="chapter-name">'+chapterNames[q.d]+'</div><div class="question-position" aria-label="目前第 '+(s.index+1)+' 關，共 '+s.questions.length+' 關"><span>關卡</span><strong class="progress-fraction">'+(s.index+1)+'/'+s.questions.length+'</strong></div></div><div class="timer-wrap"><span class="timer-clock">'+q.limit+'</span><span class="timer-meta">SECONDS<br>本題倒數</span></div><div class="score-box"><span>'+s.score+'</span><small>POINTS</small></div></div><div class="timer-track"><span></span></div><div class="question-intro"><h2>'+q.title+'</h2><div class="question-model"><span class="model-label">已知</span><span class="math">'+questionModelHTML(q)+'</span></div><p class="question-stem">'+q.stem+'</p><div class="condition">'+q.condition+'</div></div><div class="question-workspace">'+workspaceHTML(lane)+'</div><div class="feedback" role="status"><span class="feedback-heading">觀察提示</span><span>'+initialTip(q)+'</span></div><div class="action-bar"><button class="primary-button submit-button" data-action="submit" data-player="'+lane.id+'" disabled>請先'+(q.mode==='match'?'完成三組配對':'選擇圖形')+'</button></div></div>';
     fitGraphs(lane);refreshLane(lane,Date.now());
     if(lane.graphObserver)lane.graphObserver.disconnect();
     if(window.ResizeObserver){lane.graphObserver=new ResizeObserver(()=>fitGraphs(lane));lane.graphObserver.observe($('.question-workspace',lane.root));}
+  }
+  function questionModelHTML(q){
+    if(q.d===1)return 'f(x) = mx + b';
+    if(q.d===2)return 'f(x) = ax<sup>2</sup> + bx + c';
+    if(q.stage===0)return 'f(x) = ax<sup>3</sup> + bx<sup>2</sup> + cx + d';
+    return 'f(x) = a(x − h)<sup>3</sup>'+(q.stage===2?'':' + p(x − h)')+' + k';
   }
   function fitGraphs(lane){
     const s=lane.session;if(!s||!['question','reveal'].includes(s.phase))return;
@@ -177,6 +185,7 @@
     }
   }
   function finishRun(lane){
+    lane.root.classList.remove('match-mode');
     if(lane.graphObserver)lane.graphObserver.disconnect();
     const s=lane.session,correct=s.results.filter(r=>r.correct).length,wrong=s.results.reduce((a,r)=>a+r.wrong,0),elapsed=Math.round((s.finishedAt-s.startedAt)/1000);
     if(!lane.saved){
@@ -224,7 +233,13 @@
     records.forEach(r=>rows.push([new Date(r.date).toLocaleString('zh-TW'),r.name,r.player,(r.degrees||[]).map(d=>C.NAMES[d]).join('、'),r.seconds?.[1],r.seconds?.[2],r.seconds?.[3],r.score,r.maxScore,r.correct,r.total,r.wrong,r.elapsed]));
     const blob=new Blob(['\ufeff'+rows.map(row=>row.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='函數圖形試煉塔_成績_'+new Date().toISOString().slice(0,10)+'.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
-  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();renderModal();}catch(_){toast('請使用瀏覽器的全螢幕按鈕或 F11。');}}
+  function syncFullscreenControls(){
+    const active=!!document.fullscreenElement,button=$('#fullscreen-trigger');
+    if(button){$('span',button).textContent=active?'離開全螢幕':'全螢幕';button.setAttribute('aria-label',active?'離開全螢幕':'進入全螢幕');button.setAttribute('aria-pressed',String(active));}
+    $$('.teacher-modal [data-action="fullscreen"]').forEach(b=>b.textContent=active?'離開全螢幕':'進入全螢幕');
+  }
+  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();syncFullscreenControls();}catch(_){toast('請使用瀏覽器的全螢幕按鈕或 F11。');}}
+  document.addEventListener('fullscreenchange',syncFullscreenControls);
   function handleAction(button){
     if(button.disabled)return;
     const action=button.dataset.action,lane=lanes[+button.dataset.player];
@@ -269,6 +284,8 @@
     const pad=e.target.closest('[data-touch-pad]');
     if(pad){e.preventDefault();if(!touch.active.has(e.pointerId)){const id=+pad.dataset.touchPad;touch.counts[id]++;touch.active.set(e.pointerId,id);touch.maximum=Math.max(touch.maximum,touch.active.size);try{$('#modal-root').setPointerCapture(e.pointerId);}catch(_){}updateTouch();}return;}
     const button=e.target.closest('button[data-action]');if(!button||button.disabled)return;
+    // Fullscreen requires a completed trusted gesture, especially for touch input.
+    if(button.dataset.action==='fullscreen')return;
     if(!inputGate.down(e.pointerId,button,Date.now()))return;
     e.preventDefault();
     try{(button.closest('.teacher-modal')?$('#modal-root'):arena).setPointerCapture(e.pointerId);}catch(_){}
@@ -285,6 +302,7 @@
   document.addEventListener('click',e=>{
     const teacher=e.target.closest('#teacher-trigger');if(teacher){if(e.detail===0)openTeacher();e.preventDefault();return;}
     const button=e.target.closest('button[data-action]');if(!button||button.disabled)return;
+    if(button.dataset.action==='fullscreen'){e.preventDefault();handleAction(button);return;}
     if(!inputGate.acceptClick(button,e.detail,e.pointerId,Date.now())){e.preventDefault();return;}
     e.preventDefault();handleAction(button);
   });
@@ -298,7 +316,7 @@
     document.addEventListener('mousedown',e=>{if(e.target.closest('#teacher-trigger'))beginHold({preventDefault:()=>e.preventDefault(),pointerId:1,clientX:e.clientX,clientY:e.clientY});});
     document.addEventListener('mouseup',cancelHold);
   }
-  document.addEventListener('contextmenu',e=>{if(e.target.closest('#arena,#teacher-trigger,.teacher-modal')&&!e.target.closest('input'))e.preventDefault();});
+  document.addEventListener('contextmenu',e=>{if(e.target.closest('#arena,#teacher-trigger,#fullscreen-trigger,.teacher-modal')&&!e.target.closest('input'))e.preventDefault();});
   document.addEventListener('dragstart',e=>{if(e.target.closest('#arena,.teacher-modal'))e.preventDefault();});
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'&&modal){e.preventDefault();closeTeacher();return;}

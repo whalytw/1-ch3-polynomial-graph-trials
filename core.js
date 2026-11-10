@@ -4,7 +4,7 @@
   else root.GraphTrialCore = core;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
-  const VERSION = '1.0.0';
+  const VERSION = '1.0.1';
   const NAMES = {1:'一次多項式',2:'二次多項式',3:'三次多項式'};
   const DEFAULTS = {degrees:[1,2], seconds:{1:30,2:30,3:30}, theme:'dark', sound:false};
   function normalizeConfig(input) {
